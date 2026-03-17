@@ -1,4 +1,4 @@
-Project Overview
+Project Overview:
 This repository contains the implementation of a computational system for the classification of breast cancer tumors using Machine Learning techniques. 
 The project was developed as part of a Bachelor's Thesis, focusing on the analysis of cytological features extracted from breast mass biopsies.
 
@@ -20,7 +20,7 @@ Upon data entry, it performs feature scaling and executes the classification alg
 
 
 
-Επισκόπηση Έργου
+Επισκόπηση Έργου:
 Αυτό το έργο περιλαμβάνει την εφαρμογή ενός υπολογιστικού συστήματος για την ταξινόμηση των όγκων καρκίνου του μαστού χρησιμοποιώντας τεχνικές Μηχανικής Μάθησης.
 Το έργο αναπτύχθηκε ως μέρος μιας πτυχιακής εργασίας, με επίκεντρο την ανάλυση κυτταρολογικών χαρακτηριστικών που εξάγονται από βιοψίες μαστικών μαστών.
 
