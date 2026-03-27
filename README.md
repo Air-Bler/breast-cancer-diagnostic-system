@@ -1,42 +1,24 @@
-Project Overview:
-This repository contains the implementation of a computational system for the classification of breast cancer tumors using Machine Learning techniques. 
-The project was developed as part of a Bachelor's Thesis, focusing on the analysis of cytological features extracted from breast mass biopsies.
+Project Overview | Επισκόπηση Έργου
+This repository contains a comprehensive computational system for breast cancer tumor classification using advanced Machine Learning techniques. Developed as a Bachelor's Thesis, the project focuses on the diagnostic analysis of cytological features from breast mass biopsies.
 
-Dataset: Breast Cancer Wisconsin (Diagnostic) Dataset from UCI Machine Learning Repository
-Key Libraries: Scikit-Learn, Pandas, NumPy, Joblib
-Primary Algorithm: Random Forest Classifier
+Αυτό το project περιλαμβάνει ένα ολοκληρωμένο υπολογιστικό σύστημα για την ταξινόμηση όγκων καρκίνου του μαστού. Αναπτύχθηκε στο πλαίσιο πτυχιακής εργασίας και επικεντρώνεται στη διαγνωστική ανάλυση κυτταρολογικών χαρακτηριστικών από βιοψίες μαστού.
 
-Project Structure:
 
-breast_cancer_project.ipynb: The primary research notebook containing data exploration, preprocessing, and model training.
-
-chatbot/ai_chatbot.py: A command-line interface (CLI) that allows users to input clinical parameters and receive real-time diagnostic predictions.
-
-*.pkl: Serialized files containing the trained model and the feature scaler (StandardScaler).
-
-Functionality:
-The system processes 30 distinct  features from digital images of fine needle aspirates. 
-Upon data entry, it performs feature scaling and executes the classification algorithm to determine whether a tumor is Benign or Malignant, providing a statistical confidence score for each prediction.
+Technical Specifications | Τεχνικές Προδιαγραφές
+-Dataset: Breast Cancer Wisconsin (Diagnostic) - UCI Machine Learning Repository.
+-Key Libraries: Scikit-Learn, Pandas, NumPy, Streamlit, Joblib.
+-Algorithms Evaluated: Logistic Regression, Decision Tree, Random Forest, SVM, k-NN, Neural Network (MLP).
+-Primary Model: Multi-Layer Perceptron (Neural Network) with 99.67% AUC.
 
 
 
-Επισκόπηση Έργου:
-Αυτό το έργο περιλαμβάνει την εφαρμογή ενός υπολογιστικού συστήματος για την ταξινόμηση των όγκων καρκίνου του μαστού χρησιμοποιώντας τεχνικές Μηχανικής Μάθησης.
-Το έργο αναπτύχθηκε ως μέρος μιας πτυχιακής εργασίας, με επίκεντρο την ανάλυση κυτταρολογικών χαρακτηριστικών που εξάγονται από βιοψίες μαστικών μαστών.
+Functionality | Λειτουργικότητα
+-The system processes 30 distinct morphological features. Upon entry via the web interface:
+  1.Feature Scaling: Inputs are normalized in real-time.
+  2.Classification: The Neural Network engine classifies the tumor as Benign or Malignant.
+  3.Confidence Score: Provides a statistical probability for the diagnostic outcome.
 
-Σύνολο Δεδομένων: Breast Cancer Wisconsin (Diagnostic) Dataset από το UCI Machine Learning Repository
-Βασικές Βιβλιοθήκες: Scikit-Learn, Pandas, NumPy, Joblib
-Κύριος Αλγόριθμος: Random Forest Classifier
-
-
-Δομή του Έργου:
-
-breast_cancer_project.ipynb: Το κύριο αρχείο έρευνας που περιλαμβάνει την εξερεύνηση δεδομένων, την προεπεξεργασία και την εκπαίδευση του μοντέλου.
-
-chatbot/ai_chatbot.py: Μια διεπαφή γραμμής εντολών (CLI) που επιτρέπει στον χρήστη την εισαγωγή κλινικών παραμέτρων και τη λήψη διαγνωστικών προβλέψεων σε πραγματικό χρόνο.
-
-*.pkl: Αρχεία σειριοποίησης που περιέχουν το εκπαιδευμένο μοντέλο και τις παραμέτρους κανονικοποίησης (StandardScaler).
-
-Λειτουργικότητα:
-Το σύστημα επεξεργάζεται 30 διαφορετικά  χαρακτηριστικά από ψηφιοποιημένες εικόνες δειγμάτων βιοψίας.
-Με την εισαγωγή των δεδομένων, πραγματοποιείται κανονικοποίηση των χαρακτηριστικών και εκτελείται ο αλγόριθμος ταξινόμησης για τον προσδιορισμό του όγκου ως Καλοήθη ή Κακοήθη, παρέχοντας παράλληλα έναν συντελεστή στατιστικής βεβαιότητας για κάθε πρόβλεψη.
+-Το σύστημα επεξεργάζεται 30 μορφολογικά χαρακτηριστικά. Μέσω της web διεπαφής:
+  1.Κανονικοποίηση: Τα δεδομένα εισόδου εξομαλύνονται σε πραγματικό χρόνο.
+  2.Ταξινόμηση: Το Νευρωνικό Δίκτυο κατηγοριοποιεί τον όγκο ως Καλοήθη ή Κακοήθη.
+  3.Βεβαιότητα: Παρέχεται το ποσοστό στατιστικής πιθανότητας για το αποτέλεσμα.
