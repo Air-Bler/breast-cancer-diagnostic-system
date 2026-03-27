@@ -1,97 +1,75 @@
 import os
-import joblib
+import streamlit as st 
+import streamlit as st 
 import numpy as np
-import time
+
 
 
 # ΣΥΣΤΗΜΑ ΥΠΟΛΟΓΙΣΤΙΚΗΣ ΤΑΞΙΝΟΜΗΣΗΣ ΒΙΟΪΑΤΡΙΚΩΝ ΔΕΔΟΜΕΝΩΝ
+st.set_page_config(page_title="Breast Cancer Diagnostic Assistant", layout="wide")
+
+@st.cache_resource
+def load_assets():
+    model = joblib.load('neural_network_model.pkl')
+    scaler = joblib.load('scaler.pkl')
+    return model, scaler
+
+try:
+    mlp_model, data_scaler = load_assets()
+except:
+    st.error("Σφάλμα: Δεν βρέθηκαν τα αρχεία 'neural_network_model.pkl' ή 'scaler.pkl'.")
 
 
-def load_system_components():
-    try:
-        model = joblib.load("../breast_cancer_rf_model.pkl")
-        scaler = joblib.load("../scaler.pkl")
-        print("[INFO] Οι παράμετροι του μοντέλου φορτώθηκαν επιτυχώς.")
-        return model, scaler
-    except Exception as e:
-        print(f"[ERROR] Αποτυχία φόρτωσης συστήματος: {e}")
-        exit()
+    st.title("🩺 Σύστημα Υποστήριξης Διαγνωστικών Αποφάσεων")
+st.markdown("""
+Αυτή η εφαρμογή χρησιμοποιεί ένα **Τεχνητό Νευρωνικό Δίκτυο (MLP)** για την ανάλυση μορφολογικών χαρακτηριστικών κυττάρων 
+και την πρόβλεψη πιθανής κακοήθειας.
+""")
 
-def validate_input_ranges(val_list):
+st.sidebar.header("Εισαγωγή Δεδομένων Βιοψίας")
+st.sidebar.info("Εισάγετε τις τιμές 'Worst'  για ακριβέστερη πρόβλεψη.")
 
-    # 1. Βασικός έλεγχος: Καμία τιμή δεν μπορεί να είναι αρνητική
-    if any(n < 0 for n in val_list):
-        print("[VALIDATION ERROR] Εντοπίστηκαν αρνητικές τιμές. Οι μετρήσεις πρέπει να είναι θετικές.")
-        return False
+feature_names = [
+    'radius_mean', 'texture_mean', 'perimeter_mean', 'area_mean', 'smoothness_mean',
+    'compactness_mean', 'concavity_mean', 'concave points_mean', 'symmetry_mean', 'fractal_dimension_mean',
+    'radius_se', 'texture_se', 'perimeter_se', 'area_se', 'smoothness_se',
+    'compactness_se', 'concavity_se', 'concave points_se', 'symmetry_se', 'fractal_dimension_se',
+    'radius_worst', 'texture_worst', 'perimeter_worst', 'area_worst', 'smoothness_worst',
+    'compactness_worst', 'concavity_worst', 'concave points_worst', 'symmetry_worst', 'fractal_dimension_worst'
+]
+
+user_values = []
+col1, col2 = st.columns(2)
+
+for i, name in enumerate(feature_names):
+
+    with col1 if i < 15 else col2:
+        val = st.number_input(f"{name}", value=0.0, format="%.4f")
+        user_values.append(val)
+
+        if st.button("Εκτέλεση Διάγνωσης"):
     
-    # 2. Έλεγχος ορίων για κρίσιμα χαρακτηριστικά 
-    # radius_mean (index 0): max ~30 | area_mean (index 3): max ~2500
-    if val_list[0] > 40 or val_list[3] > 4000:
-        print("[WARNING] Προσοχή: Εντοπίστηκαν ακραίες τιμές (Outliers).")
-        print("Ελέγξτε αν οι μετρήσεις είναι σε σωστή μονάδα κλίμακας.")
-        
+    input_array = np.array(user_values).reshape(1, -1)
+    input_scaled = data_scaler.transform(input_array)
+
+    prediction = mlp_model.predict(input_scaled)
+    probability = mlp_model.predict_proba(input_scaled)
+
+    st.divider()
+
+    if prediction[0] == 'M' or prediction[0] == 1:
+        st.error(f"### Αποτέλεσμα: **Πιθανή Κακοήθεια (Malignant)**")
+        conf = probability[0][1] * 100 
+    else:
+        st.success(f"### Αποτέλεσμα: **Πιθανή Καλοήθεια (Benign)**")
+        conf = probability[0][0] * 100
+
+        st.metric(label="Βεβαιότητα Μοντέλου", value=f"{conf:.2f}%")
     
-    return True
+    st.warning("**Προσοχή:** Το αποτέλεσμα αποτελεί προϊόν τεχνητής νοημοσύνης και δεν αντικαθιστά την ιατρική γνωμάτευση.")
 
-def generate_analytical_report(prediction_label, data_vector, prob):
-    r_mean = data_vector[0]
-    c_mean = data_vector[6]
-    
-    header = "--- ΤΕΧΝΙΚΗ ΑΝΑΦΟΡΑ ΤΑΞΙΝΟΜΗΤΗ ---"
-    analysis = (
-        f"Αποτέλεσμα: {prediction_label} (Βεβαιότητα: {prob:.2f}%)\n"
-        f"Στατιστική Τεκμηρίωση: Η ανάλυση βασίστηκε σε 30 παραμέτρους.\n"
-        f"Κρίσιμοι Δείκτες: Radius Mean: {r_mean}, Concavity Mean: {c_mean}."
-    )
-    disclaimer = "\n\n[ΠΡΩΤΟΚΟΛΛΟ]: Το παρόν αποτελεί προϊόν πρόβλεψης τεχνιτής νοημοσύνης και απαιτεί κλινική αξιολόγηση."
-    return f"{header}\n{analysis}{disclaimer}"
-
-def main():
-    clf, transformer = load_system_components()
-    
-    print("\n====================================================")
-    print("  INTERFACE ΠΡΟΓΝΩΣΤΙΚΗΣ ΜΟΝΤΕΛΟΠΟΙΗΣΗΣ (v1.0)")
-    print("====================================================")
-    print("Εισάγετε το διάνυσμα των 30 χαρακτηριστικών (CSV format):")
-
-    while True:
-        raw_data = input("\nΔεδομένα Εισόδου: ")
-        
-        if raw_data.lower() == 'exit':
-            break
-            
-        try:
-            val_list = [float(x.strip()) for x in raw_data.split(',')]
-            
-            if len(val_list) != 30:
-                print(f"[WARNING] Απαιτούνται 30 παράμετροι (Ελήφθησαν: {len(val_list)})")
-                continue
-
-            # --- Προσθήκη Ελέγχου Ορίων ---
-            if not validate_input_ranges(val_list):
-                continue
-
-            # Μετασχηματισμός και Πρόβλεψη
-            input_vector = np.array([val_list])
-            scaled_vector = transformer.transform(input_vector)
-            
-            print("[SYSTEM] Εκτέλεση αλγορίθμου ταξινόμησης...")
-            time.sleep(0.7)
-            
-            prediction = clf.predict(scaled_vector)
-            
-            prob = clf.predict_proba(scaled_vector)[0].max() * 100
-            
-            label = "Malignant (Κακοήθης)" if prediction[0] == 1 else "Benign (Καλοήθης)"
-            
-            print(f"\nΑποτέλεσμα: {label}")
-            print("-" * 40)
-            print(generate_analytical_report(label, val_list, prob))
-            
-        except ValueError:
-            print("[ERROR] Μη έγκυρος τύπος δεδομένων.")
-        except Exception as e:
-            print(f"[ERROR] Σφάλμα: {e}")
-
-if __name__ == "__main__":
-    main()
+#
+with st.expander("Τεχνικές Λεπτομέρειες Μοντέλου"):
+    st.write("Αλγόριθμος: Multi-Layer Perceptron (Neural Network)")
+    st.write("Επίδοση (AUC): 0.9967")
+    st.write("Προεπεξεργασία: StandardScaler")
