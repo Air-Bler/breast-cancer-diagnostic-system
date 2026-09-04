@@ -3,33 +3,20 @@ import streamlit as st
 import numpy as np
 import joblib
 
-
 st.set_page_config(page_title="Breast Cancer Diagnostic Assistant", layout="wide")
+
 
 @st.cache_resource
 def load_assets():
-    # Φόρτωση του εκπαιδευμένου μοντέλου και του scaler
     model = joblib.load('neural_network_model.pkl')
     scaler = joblib.load('scaler.pkl')
     return model, scaler
-
 
 try:
     mlp_model, data_scaler = load_assets()
 except Exception as e:
     st.error(f"Σφάλμα: Δεν βρέθηκαν τα αρχεία μοντέλου. {e}")
     st.stop()
-
-
-st.title("Σύστημα Υποστήριξης Διαγνωστικών Αποφάσεων")
-st.markdown("""
-Αυτή η εφαρμογή χρησιμοποιεί ένα Τεχνητό Νευρωνικό Δίκτυο (MLP) για την ανάλυση μορφολογικών χαρακτηριστικών κυττάρων 
-και την πρόβλεψη πιθανής κακοήθειας.
-""")
-
-st.sidebar.header("Εισαγωγή Δεδομένων Βιοψίας")
-st.sidebar.info("Εισάγετε τις τιμές των χαρακτηριστικών για ανάλυση.")
-
 
 feature_names = [
     'radius_mean', 'texture_mean', 'perimeter_mean', 'area_mean', 'smoothness_mean',
@@ -40,38 +27,97 @@ feature_names = [
     'compactness_worst', 'concavity_worst', 'concave points_worst', 'symmetry_worst', 'fractal_dimension_worst'
 ]
 
-user_values = []
-col1, col2 = st.columns(2)
+benign_sample = [
+    13.54, 14.36, 87.46, 566.3, 0.09779, 0.08129, 0.06664, 0.04781, 0.1885, 0.05766,
+    0.2699, 0.7886, 2.058, 23.56, 0.008462, 0.0146, 0.02387, 0.01315, 0.0198, 0.0023,
+    15.11, 19.26, 99.7, 711.2, 0.144, 0.1773, 0.239, 0.1288, 0.2977, 0.07259
+]
 
+malignant_sample = [
+    16.02, 23.24, 102.7, 797.8, 0.08206, 0.06669, 0.03299, 0.03323, 0.1528, 0.05697,
+    0.3795, 1.187, 2.466, 40.51, 0.004029, 0.009269, 0.01101, 0.007591, 0.0146, 0.003042,
+    19.19, 33.88, 123.8, 1150.0, 0.1181, 0.1551, 0.1459, 0.09975, 0.2948, 0.08452
+]
+
+
+for feat in feature_names:
+    if feat not in st.session_state:
+        st.session_state[feat] = 0.0
+
+
+def set_benign():
+    for feat, val in zip(feature_names, benign_sample):
+        st.session_state[feat] = float(val)
+
+def set_malignant():
+    for feat, val in zip(feature_names, malignant_sample):
+        st.session_state[feat] = float(val)
+
+def set_zeros():
+    for feat in feature_names:
+        st.session_state[feat] = 0.0
+
+#  Sidebar
+col_left, col_mid, col_right = st.sidebar.columns([1, 2, 1])
+with col_mid:
+    st.image("../images.png", width=150)
+st.sidebar.header("Εισαγωγή Δεδομένων Βιοψίας")
+st.sidebar.info("Εισάγετε χειροκίνητα τιμές ή επιλέξτε ένα έτοιμο δείγμα:")
+
+st.sidebar.button("🟢 Δείγμα Καλοήθους (Benign)", on_click=set_benign, use_container_width=True)
+st.sidebar.button("🔴 Δείγμα Κακοήθους (Malignant)", on_click=set_malignant, use_container_width=True)
+st.sidebar.button("🔄 Επαναφορά", on_click=set_zeros, use_container_width=True)
+
+
+st.title("Σύστημα Υποστήριξης Διαγνωστικών Αποφάσεων")
+st.markdown("""
+Αυτή η εφαρμογή χρησιμοποιεί ένα Τεχνητό Νευρωνικό Δίκτυο (MLP) για την ανάλυση μορφολογικών χαρακτηριστικών κυττάρων 
+και την πρόβλεψη πιθανής κακοήθειας.
+""")
+
+
+col1, col2 = st.columns(2)
 
 for i, name in enumerate(feature_names):
     with col1 if i < 15 else col2:
-        val = st.number_input(f"{name}", value=0.0, format="%.4f", key=name)
-        user_values.append(val)
+        st.number_input(
+            f"{name}",
+            format="%.4f",
+            key=name  
+        )
 
 st.divider()
 
 
-if st.button("Εκτέλεση Διάγνωσης"):
+if st.button("Εκτέλεση Διάγνωσης", type="primary", use_container_width=True):
+   
+    user_values = [st.session_state[name] for name in feature_names]
     
     input_array = np.array(user_values).reshape(1, -1)
     input_scaled = data_scaler.transform(input_array)
 
-
     prediction = mlp_model.predict(input_scaled)
     probability = mlp_model.predict_proba(input_scaled)
 
-    
-    if prediction[0] == 1 or prediction[0] == 'M':
-        st.error("Αποτέλεσμα: Πιθανή Κακοήθεια (Malignant)")
-        conf = probability[0][1] * 100 
-    else:
-        st.success("Αποτέλεσμα: Πιθανή Καλοήθεια (Benign)")
-        conf = probability[0][0] * 100
+    is_malignant = (prediction[0] == 1 or str(prediction[0]).upper() == 'M')
+    conf = probability[0][1] * 100 if is_malignant else probability[0][0] * 100
 
-    st.metric(label="Βεβαιότητα Μοντέλου", value=f"{conf:.2f}%")
-    
-    st.warning("Προσοχή:Το αποτέλεσμα αποτελεί προϊόν τεχνητής νοημοσύνης και δεν αντικαθιστά την ιατρική γνωμάτευση.")
+    st.markdown("### Αποτέλεσμα Ανάλυσης")
+    res_col1, res_col2 = st.columns([2, 1])
+
+    with res_col1:
+        if is_malignant:
+            st.error("###  Πιθανή Κακοήθεια (Malignant)")
+            st.write("Τα μορφολογικά χαρακτηριστικά παραπέμπουν σε κακοήθη αλλοίωση.")
+        else:
+            st.success("###  Πιθανή Καλοήθεια (Benign)")
+            st.write("Τα μορφολογικά χαρακτηριστικά παραπέμπουν σε καλοήθη αλλοίωση.")
+
+    with res_col2:
+        st.metric(label="Βεβαιότητα Μοντέλου", value=f"{conf:.2f}%")
+        st.progress(conf / 100.0)
+
+    st.warning("Προσοχή: Το αποτέλεσμα αποτελεί προϊόν τεχνητής νοημοσύνης και δεν αντικαθιστά την ιατρική γνωμάτευση.")
 
 
 with st.expander("Τεχνικές Λεπτομέρειες Μοντέλου"):
