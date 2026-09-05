@@ -89,7 +89,7 @@ for i, name in enumerate(feature_names):
 st.divider()
 
 
-# 6. Εκτέλεση Διάγνωσης
+
 if st.button("Εκτέλεση Διάγνωσης", type="primary", use_container_width=True):
     user_values = [st.session_state[name] for name in feature_names]
     
@@ -117,12 +117,10 @@ if st.button("Εκτέλεση Διάγνωσης", type="primary", use_containe
         st.metric(label="Βεβαιότητα Μοντέλου", value=f"{conf:.2f}%")
         st.progress(conf / 100.0)
 
-    # Επεξήγηση Αποτελέσματος (Explainability)
+    
     st.markdown("####  Κύριοι Παράγοντες Διαγνωστικής Εκτίμησης")
     
-    # Τιμές αναφοράς (μέσοι όροι από το Wisconsin Diagnostic dataset)
-    # Καλοήθη: radius ~12.15, concave points ~0.026, texture ~17.91
-    # Κακοήθη: radius ~17.46, concave points ~0.088, texture ~21.60
+   
     r_val = st.session_state['radius_mean']
     cp_val = st.session_state['concave points_mean']
     t_val = st.session_state['texture_mean']
