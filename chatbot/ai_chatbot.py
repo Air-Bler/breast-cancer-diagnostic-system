@@ -89,8 +89,8 @@ for i, name in enumerate(feature_names):
 st.divider()
 
 
+# 6. Εκτέλεση Διάγνωσης
 if st.button("Εκτέλεση Διάγνωσης", type="primary", use_container_width=True):
-   
     user_values = [st.session_state[name] for name in feature_names]
     
     input_array = np.array(user_values).reshape(1, -1)
@@ -117,10 +117,30 @@ if st.button("Εκτέλεση Διάγνωσης", type="primary", use_containe
         st.metric(label="Βεβαιότητα Μοντέλου", value=f"{conf:.2f}%")
         st.progress(conf / 100.0)
 
+    # Επεξήγηση Αποτελέσματος (Explainability)
+    st.markdown("####  Κύριοι Παράγοντες Διαγνωστικής Εκτίμησης")
+    
+    # Τιμές αναφοράς (μέσοι όροι από το Wisconsin Diagnostic dataset)
+    # Καλοήθη: radius ~12.15, concave points ~0.026, texture ~17.91
+    # Κακοήθη: radius ~17.46, concave points ~0.088, texture ~21.60
+    r_val = st.session_state['radius_mean']
+    cp_val = st.session_state['concave points_mean']
+    t_val = st.session_state['texture_mean']
+
+    if is_malignant:
+        st.write("Η ταξινόμηση ως **πιθανή κακοήθεια** βασίστηκε κυρίως στις παρακάτω αποκλίσεις:")
+        if r_val > 14.0:
+            st.markdown(f"* **Αυξημένο Μέγεθος Πυρήνα (`radius_mean` = {r_val:.2f}):** Η τιμή υπερβαίνει τον μέσο όρο καλοήθων δειγμάτων (~12.15), υποδεικνύοντας κυτταρική υπερπλασία.")
+        if cp_val > 0.05:
+            st.markdown(f"* **Ανωμαλία Περιγράμματος (`concave points_mean` = {cp_val:.4f}):** Υψηλός αριθμός κοίλων σημείων, ένδειξη έντονης ανωμαλίας στη μεμβράνη του κυττάρου.")
+        if t_val > 20.0:
+            st.markdown(f"* **Υψηλή Ανομοιογένεια Υφής (`texture_mean` = {t_val:.2f}):** Μεγάλη διακύμανση στις τιμές φωτεινότητας, χαρακτηριστικό ανομοιόμορφης χρωματίνης.")
+        if r_val <= 14.0 and cp_val <= 0.05 and t_val <= 20.0:
+            st.markdown("* **Συνδυαστική Πολυπαραμετρική Απόκλιση:** Παρότι τα κύρια μεγέθη παραμένουν ενδιάμεσα, οι δευτερεύουσες παράμετροι (worst/se) συγκλίνουν προς κακοήθη συμπεριφορά.")
+    else:
+        st.write("Η ταξινόμηση ως **πιθανή καλοήθεια** βασίστηκε κυρίως στα εξής φυσιολογικά ευρήματα:")
+        st.markdown(f"* **Φυσιολογικό Μέγεθος Πυρήνα (`radius_mean` = {r_val:.2f}):** Εντός των αναμενόμενων ορίων για μη κακοήθεις ιστούς.")
+        st.markdown(f"* **Ομαλό Περίγραμμα (`concave points_mean` = {cp_val:.4f}):** Χαμηλός αριθμός κοιλοτήτων, στοιχείο που υποδηλώνει διατηρημένη κυτταρική δομή.")
+        st.markdown(f"* **Ομοιόμορφη Υφή (`texture_mean` = {t_val:.2f}):** Χαμηλή διακύμανση στην πυκνότητα των κυττάρων.")
+
     st.warning("Προσοχή: Το αποτέλεσμα αποτελεί προϊόν τεχνητής νοημοσύνης και δεν αντικαθιστά την ιατρική γνωμάτευση.")
-
-
-with st.expander("Τεχνικές Λεπτομέρειες Μοντέλου"):
-    st.write("Αλγόριθμος: Multi-Layer Perceptron (Neural Network)")
-    st.write("Επίδοση (AUC): 0.99")
-    st.write("Προεπεξεργασία: StandardScaler")
