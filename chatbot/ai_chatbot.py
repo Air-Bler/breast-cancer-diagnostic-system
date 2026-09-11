@@ -18,14 +18,26 @@ except Exception as e:
     st.error(f"Σφάλμα: Δεν βρέθηκαν τα αρχεία μοντέλου. {e}")
     st.stop()
 
-feature_names = [
-    'radius_mean', 'texture_mean', 'perimeter_mean', 'area_mean', 'smoothness_mean',
-    'compactness_mean', 'concavity_mean', 'concave points_mean', 'symmetry_mean', 'fractal_dimension_mean',
-    'radius_se', 'texture_se', 'perimeter_se', 'area_se', 'smoothness_se',
-    'compactness_se', 'concavity_se', 'concave points_se', 'symmetry_se', 'fractal_dimension_se',
-    'radius_worst', 'texture_worst', 'perimeter_worst', 'area_worst', 'smoothness_worst',
-    'compactness_worst', 'concavity_worst', 'concave points_worst', 'symmetry_worst', 'fractal_dimension_worst'
-]
+
+feature_info = {
+    'radius': 'Μέση απόσταση από το κέντρο προς τα σημεία της περιμέτρου του κυτταρικού πυρήνα (Μέγεθος).',
+    'texture': 'Τυπική απόκλιση τιμών κλίμακας του γκρι στην εικόνα (Ανομοιογένεια υφής).',
+    'perimeter': 'Μέγεθος της περιμέτρου του πυρήνα του κυττάρου.',
+    'area': 'Συνολικό εμβαδόν της επιφάνειας του πυρήνα.',
+    'smoothness': 'Τοπική διακύμανση στα μήκη των ακτίνων (Ομαλότητα ορίων).',
+    'compactness': 'Συμπαγικότητα: (περίμετρος² / εμβαδόν - 1.0).',
+    'concavity': 'Βαθμός σοβαρότητας των κοίλων τμημάτων του περιγράμματος.',
+    'concave points': 'Πλήθος των κοίλων σημείων στην επιφάνεια του περιγράμματος.',
+    'symmetry': 'Συμμετρία του σχήματος του κυτταρικού πυρήνα.',
+    'fractal_dimension': 'Κλασματική διάσταση (Προσέγγιση ακτογραμμής - 1.0).'
+}
+
+base_names = list(feature_info.keys())
+mean_features = [f"{k}_mean" if k != 'concave points' else 'concave points_mean' for k in base_names]
+se_features = [f"{k}_se" if k != 'concave points' else 'concave points_se' for k in base_names]
+worst_features = [f"{k}_worst" if k != 'concave points' else 'concave points_worst' for k in base_names]
+
+all_features = mean_features + se_features + worst_features
 
 benign_sample = [
     13.54, 14.36, 87.46, 566.3, 0.09779, 0.08129, 0.06664, 0.04781, 0.1885, 0.05766,
@@ -40,59 +52,72 @@ malignant_sample = [
 ]
 
 
-for feat in feature_names:
+for feat in all_features:
     if feat not in st.session_state:
         st.session_state[feat] = 0.0
 
-
 def set_benign():
-    for feat, val in zip(feature_names, benign_sample):
+    for feat, val in zip(all_features, benign_sample):
         st.session_state[feat] = float(val)
 
 def set_malignant():
-    for feat, val in zip(feature_names, malignant_sample):
+    for feat, val in zip(all_features, malignant_sample):
         st.session_state[feat] = float(val)
 
 def set_zeros():
-    for feat in feature_names:
+    for feat in all_features:
         st.session_state[feat] = 0.0
 
-#  Sidebar
+#Sidebar 
 col_left, col_mid, col_right = st.sidebar.columns([1, 2, 1])
 with col_mid:
-    st.image("../images.png", width=150)
-st.sidebar.header("Εισαγωγή Δεδομένων Βιοψίας")
-st.sidebar.info("Εισάγετε χειροκίνητα τιμές ή επιλέξτε ένα έτοιμο δείγμα:")
+    st.image("../images.png", width=140)
+
+st.sidebar.markdown("### Εισαγωγή Δεδομένων")
+st.sidebar.info("Επιλέξτε ένα δείγμα για αυτόματη συμπλήρωση ή εισάγετε τιμές στις καρτέλες:")
 
 st.sidebar.button("🟢 Δείγμα Καλοήθους (Benign)", on_click=set_benign, use_container_width=True)
 st.sidebar.button("🔴 Δείγμα Κακοήθους (Malignant)", on_click=set_malignant, use_container_width=True)
-st.sidebar.button("🔄 Επαναφορά", on_click=set_zeros, use_container_width=True)
+st.sidebar.button("🔄 Επαναφορά σε 0.0", on_click=set_zeros, use_container_width=True)
 
 
 st.title("Σύστημα Υποστήριξης Διαγνωστικών Αποφάσεων")
-st.markdown("""
-Αυτή η εφαρμογή χρησιμοποιεί ένα Τεχνητό Νευρωνικό Δίκτυο (MLP) για την ανάλυση μορφολογικών χαρακτηριστικών κυττάρων 
-και την πρόβλεψη πιθανής κακοήθειας.
-""")
+st.caption("Ανάλυση μορφολογικών χαρακτηριστικών κυττάρων μέσω Τεχνητού Νευρωνικού Δικτύου (MLP).")
 
 
-col1, col2 = st.columns(2)
+def render_feature_group(features, suffix_label):
+    col1, col2 = st.columns(2)
+    for i, name in enumerate(features):
+        base_metric = name.replace('_mean', '').replace('_se', '').replace('_worst', '')
+        tooltip = f"{feature_info.get(base_metric, '')} ({suffix_label})"
+        
+        target_col = col1 if i < 5 else col2
+        with target_col:
+            st.number_input(
+                f"{name}",
+                format="%.4f",
+                key=name,
+                help=tooltip
+            )
 
-for i, name in enumerate(feature_names):
-    with col1 if i < 15 else col2:
-        st.number_input(
-            f"{name}",
-            format="%.4f",
-            key=name  
-        )
+tab_mean, tab_se, tab_worst = st.tabs([
+    " Μέσες Τιμές (Mean)", 
+    " Τυπικά Σφάλματα (Standard Error)", 
+    " Χειρότερες Τιμές (Worst / Largest)"
+])
+
+with tab_mean:
+    render_feature_group(mean_features, "Μέση Τιμή")
+with tab_se:
+    render_feature_group(se_features, "Τυπικό Σφάλμα")
+with tab_worst:
+    render_feature_group(worst_features, "Μέση τιμή των 3 μεγαλύτερων τιμών")
 
 st.divider()
 
 
-
 if st.button("Εκτέλεση Διάγνωσης", type="primary", use_container_width=True):
-    user_values = [st.session_state[name] for name in feature_names]
-    
+    user_values = [st.session_state[name] for name in all_features]
     input_array = np.array(user_values).reshape(1, -1)
     input_scaled = data_scaler.transform(input_array)
 
@@ -107,20 +132,18 @@ if st.button("Εκτέλεση Διάγνωσης", type="primary", use_containe
 
     with res_col1:
         if is_malignant:
-            st.error("###  Πιθανή Κακοήθεια (Malignant)")
+            st.error("### Πιθανή Κακοήθεια (Malignant)")
             st.write("Τα μορφολογικά χαρακτηριστικά παραπέμπουν σε κακοήθη αλλοίωση.")
         else:
-            st.success("###  Πιθανή Καλοήθεια (Benign)")
+            st.success("### Πιθανή Καλοήθεια (Benign)")
             st.write("Τα μορφολογικά χαρακτηριστικά παραπέμπουν σε καλοήθη αλλοίωση.")
 
     with res_col2:
         st.metric(label="Βεβαιότητα Μοντέλου", value=f"{conf:.2f}%")
         st.progress(conf / 100.0)
 
-    
-    st.markdown("####  Κύριοι Παράγοντες Διαγνωστικής Εκτίμησης")
-    
-   
+
+    st.markdown("#### Κύριοι Παράγοντες Διαγνωστικής Εκτίμησης")
     r_val = st.session_state['radius_mean']
     cp_val = st.session_state['concave points_mean']
     t_val = st.session_state['texture_mean']
@@ -128,17 +151,23 @@ if st.button("Εκτέλεση Διάγνωσης", type="primary", use_containe
     if is_malignant:
         st.write("Η ταξινόμηση ως **πιθανή κακοήθεια** βασίστηκε κυρίως στις παρακάτω αποκλίσεις:")
         if r_val > 14.0:
-            st.markdown(f"* **Αυξημένο Μέγεθος Πυρήνα (`radius_mean` = {r_val:.2f}):** Η τιμή υπερβαίνει τον μέσο όρο καλοήθων δειγμάτων (~12.15), υποδεικνύοντας κυτταρική υπερπλασία.")
+            st.markdown(f"* **Αυξημένο Μέγεθος Πυρήνα (`radius_mean` = {r_val:.2f}):** Υπέρβαση μέσου όρου καλοήθων δειγμάτων (~12.15).")
         if cp_val > 0.05:
-            st.markdown(f"* **Ανωμαλία Περιγράμματος (`concave points_mean` = {cp_val:.4f}):** Υψηλός αριθμός κοίλων σημείων, ένδειξη έντονης ανωμαλίας στη μεμβράνη του κυττάρου.")
+            st.markdown(f"* **Ανωμαλία Περιγράμματος (`concave points_mean` = {cp_val:.4f}):** Υψηλός αριθμός κοίλων σημείων μεμβράνης.")
         if t_val > 20.0:
-            st.markdown(f"* **Υψηλή Ανομοιογένεια Υφής (`texture_mean` = {t_val:.2f}):** Μεγάλη διακύμανση στις τιμές φωτεινότητας, χαρακτηριστικό ανομοιόμορφης χρωματίνης.")
+            st.markdown(f"* **Υψηλή Ανομοιογένεια Υφής (`texture_mean` = {t_val:.2f}):** Έντονη διακύμανση πυκνότητας χρωματίνης.")
         if r_val <= 14.0 and cp_val <= 0.05 and t_val <= 20.0:
-            st.markdown("* **Συνδυαστική Πολυπαραμετρική Απόκλιση:** Παρότι τα κύρια μεγέθη παραμένουν ενδιάμεσα, οι δευτερεύουσες παράμετροι (worst/se) συγκλίνουν προς κακοήθη συμπεριφορά.")
+            st.markdown("* **Συνδυαστική Πολυπαραμετρική Απόκλιση:** Σύγκλιση των δευτερευόντων παραμέτρων (worst/se) σε κακοήθεια.")
     else:
-        st.write("Η ταξινόμηση ως **πιθανή καλοήθεια** βασίστηκε κυρίως στα εξής φυσιολογικά ευρήματα:")
-        st.markdown(f"* **Φυσιολογικό Μέγεθος Πυρήνα (`radius_mean` = {r_val:.2f}):** Εντός των αναμενόμενων ορίων για μη κακοήθεις ιστούς.")
-        st.markdown(f"* **Ομαλό Περίγραμμα (`concave points_mean` = {cp_val:.4f}):** Χαμηλός αριθμός κοιλοτήτων, στοιχείο που υποδηλώνει διατηρημένη κυτταρική δομή.")
-        st.markdown(f"* **Ομοιόμορφη Υφή (`texture_mean` = {t_val:.2f}):** Χαμηλή διακύμανση στην πυκνότητα των κυττάρων.")
+        st.write("Η ταξινόμηση ως **πιθανή καλοήθεια** βασίστηκε στα εξής φυσιολογικά ευρήματα:")
+        st.markdown(f"* **Φυσιολογικό Μέγεθος Πυρήνα (`radius_mean` = {r_val:.2f}):** Εντός φυσιολογικών ορίων.")
+        st.markdown(f"* **Ομαλό Περίγραμμα (`concave points_mean` = {cp_val:.4f}):** Ελάχιστες κυτταρικές κοιλότητες.")
+        st.markdown(f"* **Ομοιόμορφη Υφή (`texture_mean` = {t_val:.2f}):** Ομαλή κατανομή φωτεινότητας.")
 
-    st.warning("Προσοχή: Το αποτέλεσμα αποτελεί προϊόν τεχνητής νοημοσύνης και δεν αντικαθιστά την ιατρική γνωμάτευση.")
+    st.warning("**Προσοχή:** Το αποτέλεσμα αποτελεί προϊόν υπολογιστικού μοντέλου τεχνητής νοημοσύνης και δεν αντικαθιστά την ιατρική γνωμάτευση.")
+
+#  Τεχνικές Λεπτομέρειες
+with st.expander("Τεχνικές Λεπτομέρειες Μοντέλου"):
+    st.write("**Αλγόριθμος:** Multi-Layer Perceptron (Neural Network)")
+    st.write("**Επίδοση (AUC):** 0.99")
+    st.write("**Προεπεξεργασία:** StandardScaler")
