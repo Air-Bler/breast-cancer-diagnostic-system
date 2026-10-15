@@ -1,0 +1,19 @@
+[project]
+name = "breast-cancer-ml"
+version = "0.1.0"
+description = "Breast cancer tumor classification (Benign/Malignant) with ML and a Streamlit app"
+requires-python = ">=3.13"
+dependencies = [
+    "joblib>=1.6.0",
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.4",
+    "pandas>=3.0.6",
+    "scikit-learn>=1.9",
+    "seaborn>=0.13.2",
+    "streamlit>=1.66.0",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+]
