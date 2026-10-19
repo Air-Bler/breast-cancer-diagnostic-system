@@ -68,7 +68,6 @@ def set_zeros():
     for feat in all_features:
         st.session_state[feat] = 0.0
 
-#Sidebar 
 col_left, col_mid, col_right = st.sidebar.columns([1, 2, 1])
 with col_mid:
     st.image("../images.png", width=140)
@@ -166,7 +165,6 @@ if st.button("Εκτέλεση Διάγνωσης", type="primary", use_containe
 
     st.warning("**Προσοχή:** Το αποτέλεσμα αποτελεί προϊόν υπολογιστικού μοντέλου τεχνητής νοημοσύνης και δεν αντικαθιστά την ιατρική γνωμάτευση.")
 
-#  Τεχνικές Λεπτομέρειες
 with st.expander("Τεχνικές Λεπτομέρειες Μοντέλου"):
     st.write("**Αλγόριθμος:** Multi-Layer Perceptron (Neural Network)")
     st.write("**Επίδοση (AUC):** 0.99")
